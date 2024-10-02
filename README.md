@@ -12,7 +12,7 @@ dio.interceptors.add(insightsInterceptor);
 
 ## Additional information
 
-The interceptor will auto-configure itself if deployed on Azure and a connection to Application Insights is setup. Auto-configuration happens by reading the environment variable APPLICATIONINSIGHTS_CONNECTION_STRING.
+The interceptor will auto-configure itself if deployed on Azure and a connection to Application Insights is setup. Auto-configuration happens by reading the environment variable `APPLICATIONINSIGHTS_CONNECTION_STRING`.
 
 Alternatively either a connection or an existing instance of `TelemetryClient` can be supplied.
 
