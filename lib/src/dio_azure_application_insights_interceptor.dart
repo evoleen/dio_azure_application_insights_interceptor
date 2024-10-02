@@ -95,6 +95,12 @@ class DioAzureApplicationInsightsInterceptor extends Interceptor {
       duration: requestDuration,
       responseCode: response.statusCode?.toString() ?? '200',
       url: response.requestOptions.uri.toString(),
+      additionalProperties: {
+        if (Platform.environment['WEBSITE_SITE_NAME'] != null)
+          'appName': Platform.environment['WEBSITE_SITE_NAME']!,
+        if (Platform.environment['WEBSITE_OWNER_NAME'] != null)
+          'appId': Platform.environment['WEBSITE_OWNER_NAME']!,
+      },
     );
 
     return super.onResponse(response, handler);
