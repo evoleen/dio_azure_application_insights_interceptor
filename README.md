@@ -7,7 +7,8 @@ This package is inspired by [a previous implementation for Firebase](https://git
 ```dart
 final dio = Dio();
 final insightsInterceptor = DioAzureApplicationInsightsInterceptor();
-dio.interceptors.add(insightsInterceptor);```
+dio.interceptors.add(insightsInterceptor);
+```
 
 ## Additional information
 
