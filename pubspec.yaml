@@ -1,6 +1,6 @@
 name: dio_azure_application_insights_interceptor
 description: A Dio interceptor to submit telemetry data to Azure Application Insights
-version: 0.0.1
+version: 0.0.2
 repository: https://github.com/evoleen/dio_azure_application_insights_interceptor
 environment:
   sdk: ^3.4.3
