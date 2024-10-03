@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:azure_application_insights/azure_application_insights.dart';
@@ -122,6 +123,17 @@ class DioAzureApplicationInsightsInterceptor extends Interceptor {
       responseCode: err.response?.statusCode?.toString() ?? '500',
       success: false,
       url: err.response?.requestOptions.uri.toString(),
+      additionalProperties: {
+        'requestHeaders': jsonEncode(err.requestOptions.headers.map),
+        'requestData': err.requestOptions.data,
+        'responseMessage': err.message ?? 'null',
+        'responseData': err.response?.data,
+        'responseHeaders': jsonEncode(err.response?.headers.map),
+        if (Platform.environment['WEBSITE_SITE_NAME'] != null)
+          'appName': Platform.environment['WEBSITE_SITE_NAME']!,
+        if (Platform.environment['WEBSITE_OWNER_NAME'] != null)
+          'appId': Platform.environment['WEBSITE_OWNER_NAME']!,
+      },
     );
 
     return super.onError(err, handler);
