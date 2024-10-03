@@ -125,9 +125,9 @@ class DioAzureApplicationInsightsInterceptor extends Interceptor {
       url: err.response?.requestOptions.uri.toString(),
       additionalProperties: {
         'requestHeaders': jsonEncode(err.requestOptions.headers),
-        'requestData': err.requestOptions.data,
+        'requestData': err.requestOptions.data ?? 'null',
         'responseMessage': err.message ?? 'null',
-        'responseData': err.response?.data,
+        'responseData': err.response?.data ?? 'null',
         'responseHeaders': jsonEncode(err.response?.headers),
         if (Platform.environment['WEBSITE_SITE_NAME'] != null)
           'appName': Platform.environment['WEBSITE_SITE_NAME']!,
