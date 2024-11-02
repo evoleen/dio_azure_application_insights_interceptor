@@ -87,6 +87,8 @@ class DioAzureApplicationInsightsInterceptor extends Interceptor {
       data: response.requestOptions.uri.toString(),
       additionalProperties: {
         if (Platform.environment['WEBSITE_SITE_NAME'] != null)
+          'ai.cloud.role': Platform.environment['WEBSITE_SITE_NAME']!,
+        if (Platform.environment['WEBSITE_SITE_NAME'] != null)
           'appName': Platform.environment['WEBSITE_SITE_NAME']!,
         if (Platform.environment['WEBSITE_OWNER_NAME'] != null)
           'appId': Platform.environment['WEBSITE_OWNER_NAME']!,
@@ -121,6 +123,8 @@ class DioAzureApplicationInsightsInterceptor extends Interceptor {
         'responseData': err.response?.data ?? 'null',
         'responseHeaders':
             jsonEncode(err.response?.headers.map ?? <String, dynamic>{}),
+        if (Platform.environment['WEBSITE_SITE_NAME'] != null)
+          'ai.cloud.role': Platform.environment['WEBSITE_SITE_NAME']!,
         if (Platform.environment['WEBSITE_SITE_NAME'] != null)
           'appName': Platform.environment['WEBSITE_SITE_NAME']!,
         if (Platform.environment['WEBSITE_OWNER_NAME'] != null)
