@@ -32,24 +32,10 @@ class DioAzureApplicationInsightsInterceptor extends Interceptor {
     if (telemetryClient != null) {
       _telemetryClient = telemetryClient;
     } else if (connectionString != null) {
-      final connectionStringElements = connectionString.split(';');
-
-      final instrumentationKeyCandidates = connectionStringElements
-          .where((e) => e.startsWith('InstrumentationKey='))
-          .toList();
-
-      // if we get an incorrect connection string, don't log anything
-      if (instrumentationKeyCandidates.isEmpty) {
-        return;
-      }
-
-      final instrumentationKey = instrumentationKeyCandidates.first
-          .substring('InstrumentationKey='.length);
-
       _telemetryClient = TelemetryClient(
         processor: BufferedProcessor(
           next: TransmissionProcessor(
-            instrumentationKey: instrumentationKey,
+            connectionString: connectionString,
             httpClient: httpClient ?? http.Client(),
             timeout: const Duration(seconds: 10),
           ),
@@ -91,11 +77,14 @@ class DioAzureApplicationInsightsInterceptor extends Interceptor {
         : DateTime.timestamp().difference(
             response.requestOptions.extra[startTimeKey]! as DateTime);
 
-    _telemetryClient?.trackRequest(
-      id: response.hashCode.toString(),
+    _telemetryClient?.trackDependency(
+      name: response.requestOptions.path,
+      type: response.requestOptions.uri.scheme,
+      resultCode: response.statusCode?.toString() ?? '200',
+      target: response.requestOptions.uri.host,
       duration: requestDuration,
-      responseCode: response.statusCode?.toString() ?? '200',
-      url: response.requestOptions.uri.toString(),
+      success: response.statusCode?.toString().startsWith('2'),
+      data: response.requestOptions.uri.toString(),
       additionalProperties: {
         if (Platform.environment['WEBSITE_SITE_NAME'] != null)
           'appName': Platform.environment['WEBSITE_SITE_NAME']!,
@@ -117,14 +106,15 @@ class DioAzureApplicationInsightsInterceptor extends Interceptor {
         : DateTime.timestamp()
             .difference(err.requestOptions.extra[startTimeKey]! as DateTime);
 
-    _telemetryClient?.trackRequest(
-      id: err.response.hashCode.toString(),
+    _telemetryClient?.trackDependency(
+      name: err.response?.requestOptions.path ?? 'unknown',
+      type: err.response?.requestOptions.uri.scheme,
+      resultCode: err.response?.statusCode?.toString() ?? '500',
+      target: err.response?.requestOptions.uri.host,
       duration: requestDuration,
-      responseCode: err.response?.statusCode?.toString() ?? '500',
       success: false,
-      url: err.response?.requestOptions.uri.toString(),
+      data: err.response?.requestOptions.uri.toString(),
       additionalProperties: {
-        'url': err.response?.requestOptions.uri.toString() ?? 'null',
         'requestHeaders': jsonEncode(err.requestOptions.headers),
         'requestData': err.requestOptions.data.toString(),
         'responseMessage': err.message ?? 'null',
