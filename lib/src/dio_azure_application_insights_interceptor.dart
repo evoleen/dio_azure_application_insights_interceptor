@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:azure_application_insights/azure_application_insights.dart';
 import 'package:dio/dio.dart';
+import 'package:uuid/uuid.dart';
 
 /// [Dio] client interceptor that hooks into request/response process
 /// and calls Azure Application Insights in between.
@@ -60,6 +61,14 @@ class DioAzureApplicationInsightsInterceptor extends Interceptor {
     RequestInterceptorHandler handler,
   ) async {
     try {
+      // fetch operation parent id from telemetry client
+      final parentTraceId =
+          _telemetryClient?.context.operation.parentId ?? '0000000000000000';
+
+      // inject dependency header into request
+      final requestId = Uuid().v4().replaceAll('-', '');
+      options.headers['traceparent'] = '00-$requestId-$parentTraceId-01';
+
       options.extra[startTimeKey] = DateTime.timestamp();
       options.extra[requestContentLengthKey] =
           requestContentLengthMethod(options);
