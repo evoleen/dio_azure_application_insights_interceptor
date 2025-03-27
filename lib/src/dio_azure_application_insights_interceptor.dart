@@ -54,6 +54,8 @@ class DioAzureApplicationInsightsInterceptor extends Interceptor {
       'DioAzureApplicationInsightsInterceptor_startTime';
   static const requestContentLengthKey =
       'DioAzureApplicationInsightsInterceptor_requestContextLength';
+  static const operationIdKey =
+      'DioAzureApplicationInsightsInterceptor_requestId';
 
   @override
   Future onRequest(
@@ -64,10 +66,12 @@ class DioAzureApplicationInsightsInterceptor extends Interceptor {
       // fetch operation parent id from telemetry client
       final parentTraceId =
           _telemetryClient?.context.operation.parentId ?? '0000000000000000';
+      final operationId = _telemetryClient?.context.operation.id ??
+          const Uuid().v4().replaceAll('-', '');
 
       // inject dependency header into request
-      final requestId = Uuid().v4().replaceAll('-', '');
-      options.headers['traceparent'] = '00-$requestId-$parentTraceId-01';
+      options.headers['traceparent'] ??= '00-$operationId-$parentTraceId-01';
+      options.extra[operationIdKey] = operationId;
 
       options.extra[startTimeKey] = DateTime.timestamp();
       options.extra[requestContentLengthKey] =
@@ -87,6 +91,7 @@ class DioAzureApplicationInsightsInterceptor extends Interceptor {
             response.requestOptions.extra[startTimeKey]! as DateTime);
 
     _telemetryClient?.trackDependency(
+      id: response.requestOptions.extra[operationIdKey] as String?,
       name: response.requestOptions.path,
       type: response.requestOptions.uri.scheme,
       resultCode: response.statusCode?.toString() ?? '200',
