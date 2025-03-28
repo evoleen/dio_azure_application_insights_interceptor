@@ -113,8 +113,14 @@ class DioAzureApplicationInsightsInterceptor extends Interceptor {
 
     final operationId =
         response.requestOptions.extra[operationIdKey] as String?;
-    final parentTraceId =
+    String? parentTraceId =
         response.requestOptions.extra[parentTraceIdKey] as String?;
+
+    // if the header we set contains 0000000000000000, this request has no
+    // parent. Application Insights doesn't detect this by itself.
+    if (parentTraceId != null && parentTraceId == '0000000000000000') {
+      parentTraceId = null;
+    }
 
     // NOTE: Updating these parameters on the global instance is dirty, but
     // it is currently the only way to get those values included in the trace.

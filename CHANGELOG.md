@@ -1,3 +1,6 @@
+## 0.0.7
+- Manually unset parent trace ID if it is 0000000000000000
+
 ## 0.0.6
 - Retain traceparent header if set by the caller
 - Ensure telemetry client is updated with operation IDs before logging
