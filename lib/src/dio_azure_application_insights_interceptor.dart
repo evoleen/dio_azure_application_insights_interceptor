@@ -56,6 +56,8 @@ class DioAzureApplicationInsightsInterceptor extends Interceptor {
       'DioAzureApplicationInsightsInterceptor_requestContextLength';
   static const operationIdKey =
       'DioAzureApplicationInsightsInterceptor_requestId';
+  static const parentTraceIdKey =
+      'DioAzureApplicationInsightsInterceptor_parentTraceId';
 
   @override
   Future onRequest(
@@ -88,8 +90,9 @@ class DioAzureApplicationInsightsInterceptor extends Interceptor {
       options.headers['traceparent'] ??=
           '00-$operationId-${parentTraceId ?? '0000000000000000'}-01';
 
-      // Store operation ID for use in response/error handling
+      // Store operation ID and parent trace ID for use in response/error handling
       options.extra[operationIdKey] = operationId;
+      options.extra[parentTraceIdKey] = parentTraceId;
 
       options.extra[startTimeKey] = DateTime.timestamp();
       options.extra[requestContentLengthKey] =
@@ -110,6 +113,13 @@ class DioAzureApplicationInsightsInterceptor extends Interceptor {
 
     final operationId =
         response.requestOptions.extra[operationIdKey] as String?;
+    final parentTraceId =
+        response.requestOptions.extra[parentTraceIdKey] as String?;
+
+    // NOTE: Updating these parameters on the global instance is dirty, but
+    // it is currently the only way to get those values included in the trace.
+    _telemetryClient?.context.operation.id = operationId;
+    _telemetryClient?.context.operation.parentId = parentTraceId;
 
     _telemetryClient?.trackDependency(
       id: operationId,

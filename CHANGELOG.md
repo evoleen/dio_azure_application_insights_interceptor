@@ -1,3 +1,7 @@
+## 0.0.6
+- Retain traceparent header if set by the caller
+- Ensure telemetry client is updated with operation IDs before logging
+
 ## 0.0.5
 - Generate request IDs
 - Include parent request ID if available
