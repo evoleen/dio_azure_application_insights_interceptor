@@ -63,14 +63,32 @@ class DioAzureApplicationInsightsInterceptor extends Interceptor {
     RequestInterceptorHandler handler,
   ) async {
     try {
-      // fetch operation parent id from telemetry client
-      final parentTraceId =
-          _telemetryClient?.context.operation.parentId ?? '0000000000000000';
-      final operationId = _telemetryClient?.context.operation.id ??
+      String? operationId;
+      String? parentTraceId;
+
+      // Check if traceparent header already exists
+      final existingTraceParent = options.headers['traceparent'] as String?;
+      if (existingTraceParent != null) {
+        // Parse existing traceparent header (format: version-traceId-parentId-flags)
+        final parts = existingTraceParent.split('-');
+        if (parts.length >= 4) {
+          operationId = parts[1];
+          parentTraceId = parts[2];
+        }
+      }
+
+      // Ensure we have an operation ID, generate if needed
+      operationId ??= _telemetryClient?.context.operation.id ??
           const Uuid().v4().replaceAll('-', '');
 
-      // inject dependency header into request
-      options.headers['traceparent'] ??= '00-$operationId-$parentTraceId-01';
+      // Only get parent trace ID from telemetry client if we don't have one from header
+      parentTraceId ??= _telemetryClient?.context.operation.parentId;
+
+      // Generate traceparent header if not already present
+      options.headers['traceparent'] ??=
+          '00-$operationId-${parentTraceId ?? '0000000000000000'}-01';
+
+      // Store operation ID for use in response/error handling
       options.extra[operationIdKey] = operationId;
 
       options.extra[startTimeKey] = DateTime.timestamp();
@@ -90,8 +108,11 @@ class DioAzureApplicationInsightsInterceptor extends Interceptor {
         : DateTime.timestamp().difference(
             response.requestOptions.extra[startTimeKey]! as DateTime);
 
+    final operationId =
+        response.requestOptions.extra[operationIdKey] as String?;
+
     _telemetryClient?.trackDependency(
-      id: response.requestOptions.extra[operationIdKey] as String?,
+      id: operationId,
       name: response.requestOptions.path,
       type: response.requestOptions.uri.scheme,
       resultCode: response.statusCode?.toString() ?? '200',
